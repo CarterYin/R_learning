@@ -1,0 +1,31 @@
+# 参数设定
+mysamplesize = 15              # 样本量
+alpha = 0.05                   # 显著性水平 0.05（对应 95% 置信区间）
+mytheta = 1                    # 偏移参数设为 1
+
+# 生成原始样本
+set.seed(0)  # 设置随机种子，确保结果可重复
+mysample = rexp(mysamplesize, rate=1) + mytheta  # 生成偏移后的指数分布样本
+T2_hat = min(mysample)         # 计算矩估计 T2，即原始样本的最小值
+
+# 自助法参数设定
+bootstrapsize = 1000           # 自助法样本数
+bootstrapestimates = rep(0, bootstrapsize) # 初始化数组用于存储每个自助法样本的 T2 估计
+
+# 自助法过程
+for (ii in 1:bootstrapsize) {
+    bootstrapsample = sample(mysample, size = mysamplesize, replace = TRUE) # 有放回地抽取自助法样本
+    bootstrapestimates[ii] = min(bootstrapsample)  # 计算自助法样本的 T2 矩估计
+}
+
+# 计算置信区间
+bootstrapquantiles = sort(bootstrapestimates - T2_hat) # 计算自助法估计与原估计的差值
+lowerquantile = bootstrapquantiles[round(bootstrapsize * alpha * 0.5)]
+upperquantile = bootstrapquantiles[round(bootstrapsize * (1 - alpha * 0.5))]
+
+# 计算置信区间的上下界
+lowerbound = T2_hat - upperquantile
+upperbound = T2_hat - lowerquantile
+
+# 输出结果
+list(lowerbound = lowerbound, upperbound = upperbound)
